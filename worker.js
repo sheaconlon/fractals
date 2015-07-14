@@ -2,7 +2,7 @@ onmessage = function(message){
 	console.log("fractals worker starting render");
 	var fractals = message.data;
 	var image_data_array = new Uint8ClampedArray(fractals.render_width * fractals.render_height * 4);
-	var c_r, z_r_copy, z_r, z_i, i, z_r_squared, z_i_squared;
+	var c_r, z_r_copy, z_r, z_i, i, z_r_squared, z_i_squared, squares_ratio, squares_ratio_complement;
 	var pixel_index = 0;
 	var c_r_start = fractals.c_r_start - fractals.unit_pixel_ratio;
 	var c_i = fractals.c_i_start + fractals.unit_pixel_ratio;
@@ -27,18 +27,20 @@ onmessage = function(message){
 				i++;
 			}
 			if(i == fractals.maximum_recursions){
-				image_data_array[pixel_index] = 20;
-				pixel_index++;
 				image_data_array[pixel_index] = 10;
 				pixel_index++;
-				image_data_array[pixel_index] = 0;
+				image_data_array[pixel_index] = 5;
+				pixel_index++;
+				image_data_array[pixel_index] = 1;
 				pixel_index++;
 			}else{
-				image_data_array[pixel_index] = i * i / maximum_recursions_squared * 255;
+				recursion_ratio = i / fractals.maximum_recursions
+				recursion_ratio_complement = 1 - recursion_ratio
+				image_data_array[pixel_index] = 235 * recursion_ratio + 255 * recursion_ratio_complement;
 				pixel_index++;
-				image_data_array[pixel_index] = i * i / maximum_recursions_squared * 102;
+				image_data_array[pixel_index] = 126 * recursion_ratio + 255 * recursion_ratio_complement;
 				pixel_index++;
-				image_data_array[pixel_index] = i * i / maximum_recursions_squared * 0;
+				image_data_array[pixel_index] = 16 * recursion_ratio + 255 * recursion_ratio_complement;
 				pixel_index++;
 			}
 			image_data_array[pixel_index] = 255;

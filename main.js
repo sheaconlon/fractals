@@ -4,7 +4,7 @@ var fractals = {
 			r: 1,
 			i: 0.5
 		},
-		maximum_recursions: 50,
+		maximum_recursions: 70,
 		escape_radius: 2,
 		control_height: 0.1,
 		control_padding: 0.02,
