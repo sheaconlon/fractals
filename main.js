@@ -7,7 +7,7 @@ var fractals = {
 		maximum_recursions: 70,
 		escape_radius: 2,
 		control_height: 0.1,
-		control_padding: 0.02,
+		control_padding: 0.05,
 		resolution_factor: 2
 	},
 	cached_references: {
@@ -58,15 +58,35 @@ var fractals = {
 	],
 	control_image_data: [null, null],
 	init: function(canvas){
-		console.log("fractals starting init");
 		fractals.canvas = canvas;
 		fractals.context = canvas.getContext("2d");
 		fractals.resize();
+		for(var image_index = 0; image_index < 2; image_index++){
+			fractals.control_image_data[image_index] = new Image();
+			fractals.control_image_data[image_index].width = fractals.canvas.height *  fractals.configuration.control_height;
+			fractals.control_image_data[image_index].height = fractals.control_image_data[image_index].width;
+		}
+		fractals.control_image_data[0].src = "fractals/zoom_in.svg";
+		fractals.control_image_data[1].src = "fractals/zoom_out.svg";
 		fractals.canvas.addEventListener("mousedown", function(event){
 			if(!fractals.rendering_state.rendering){
-				fractals.panning_state.panning = true;
-				fractals.panning_state.previous_mouse_position.x = event.clientX;
-				fractals.panning_state.previous_mouse_position.y = event.clientY;
+				if(event.offsetX > fractals.canvas.clientHeight * fractals.configuration.control_padding && event.offsetX < fractals.canvas.clientHeight * (fractals.configuration.control_padding + fractals.configuration.control_height)){
+					if(event.offsetY > fractals.canvas.clientHeight * fractals.configuration.control_padding && event.offsetY < fractals.canvas.clientHeight * (fractals.configuration.control_padding + fractals.configuration.control_height)){
+							fractals.view.unit_pixel_ratio /= 2;
+							fractals.render();
+					}else if(event.offsetY > fractals.canvas.clientHeight * (2 * fractals.configuration.control_padding + fractals.configuration.control_height) && event.offsetY < fractals.canvas.clientHeight * (2 * fractals.configuration.control_padding + 2 * fractals.configuration.control_height)){
+							fractals.view.unit_pixel_ratio *= 2;
+							fractals.render();
+					}else{
+						fractals.panning_state.panning = true;
+						fractals.panning_state.previous_mouse_position.x = event.clientX;
+						fractals.panning_state.previous_mouse_position.y = event.clientY;
+					}
+				}else{
+					fractals.panning_state.panning = true;
+					fractals.panning_state.previous_mouse_position.x = event.clientX;
+					fractals.panning_state.previous_mouse_position.y = event.clientY;
+				}
 			}
 		});
 		fractals.canvas.addEventListener("mousemove", function(event){
@@ -82,6 +102,9 @@ var fractals = {
 						var y = fractals.panning_state.offset.y + (y_quadrant * fractals.view.half_height);
 						fractals.context.putImageData(fractals.render_image_data[x_quadrant][y_quadrant], x, y);
 					}
+				}
+				for(var image_index = 0; image_index < 2; image_index++){
+					fractals.context.drawImage(fractals.control_image_data[image_index], fractals.canvas.height * fractals.configuration.control_padding, fractals.canvas.height * fractals.configuration.control_padding * (image_index + 1) + fractals.canvas.height * fractals.configuration.control_height * image_index, fractals.control_image_data[image_index].height, fractals.control_image_data[image_index].height);
 				}
 			}
 		});
@@ -116,17 +139,17 @@ var fractals = {
 					fractals.context.putImageData(fractals.render_image_data[worker_fractals.x_quadrant][worker_fractals.y_quadrant], worker_fractals.x_quadrant * fractals.view.half_width + (fractals.view.odd_width * (worker_fractals.x_quadrant > 0)), worker_fractals.y_quadrant * fractals.view.half_height + fractals.view.odd_height * (worker_fractals.y_quadrant > 0));
 					fractals.rendering_state.number_workers_working--;
 					if(fractals.rendering_state.number_workers_working == 0){
+						for(var image_index = 0; image_index < 2; image_index++){
+							fractals.context.drawImage(fractals.control_image_data[image_index], fractals.canvas.height * fractals.configuration.control_padding, fractals.canvas.height * fractals.configuration.control_padding * (image_index + 1) + fractals.canvas.height * fractals.configuration.control_height * image_index, fractals.control_image_data[image_index].height, fractals.control_image_data[image_index].height);
+						}
 						fractals.rendering_state.rendering = false;
-						console.log("fractals finished render");
 					}
 				};
 			}
 		}
 		fractals.render();
-		console.log("fractals finished init");
 	},
 	render: function(){
-		console.log("fractals starting render");
 		fractals.rendering_state.rendering = true;
 		for(var x_quadrant = 0; x_quadrant < 2; x_quadrant++){
 			for(var y_quadrant = 0; y_quadrant < 2; y_quadrant++){
@@ -146,7 +169,6 @@ var fractals = {
 		}
 	},
 	resize: function(){
-		console.log("fractals starting resize");
 		var clientWidth = fractals.canvas.clientWidth;
 		var clientHeight = fractals.canvas.clientHeight;
 		fractals.canvas.width = clientWidth * fractals.configuration.resolution_factor;
@@ -165,6 +187,5 @@ var fractals = {
 		fractals.view.half_width = Math.floor(fractals.view.width / 2);
 		fractals.view.height = fractals.canvas.height;
 		fractals.view.half_height = Math.floor(fractals.view.height / 2);
-		console.log("fractals finished resize");
 	}
 };

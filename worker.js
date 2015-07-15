@@ -1,5 +1,4 @@
 onmessage = function(message){
-	console.log("fractals worker starting render");
 	var fractals = message.data;
 	var image_data_array = new Uint8ClampedArray(fractals.render_width * fractals.render_height * 4);
 	var c_r, z_r_copy, z_r, z_i, i, z_r_squared, z_i_squared, squares_ratio, squares_ratio_complement;
@@ -48,5 +47,4 @@ onmessage = function(message){
 		}
 	}
 	postMessage([image_data_array, fractals]);
-	console.log("fractals worker finished render");
 }
