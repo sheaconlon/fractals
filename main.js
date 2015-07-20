@@ -1,191 +1,238 @@
 var fractals = {
 	configuration: {
-		minimum_initial_window: {
-			r: 1,
-			i: 0.5
+		image: {
+			recursion_limit: 254,
+			escape_radius: 2,
+			sample_pixel_ratio: 2
 		},
-		maximum_recursions: 70,
-		escape_radius: 2,
-		control_height: 0.1,
-		control_padding: 0.05,
-		resolution_factor: 2
+		user_interface: {
+			control_height: 0.1,
+			control_spacing: 0.05,
+			readout_height: 0.02,
+			zoom_factor: 2
+		},
+		initial_window: {
+			r: 2,
+			i: 1
+		}
 	},
-	cached_references: {
-		canvas: null,
-		context: null
-	},
-	rendering_state: {
-		rendering: false,
-		number_workers_working: 0
-	},
-	view: {
+	state: {
 		center: {
-			r: -1.6,
+			r: -0.7,
 			i: 0
 		},
 		unit_pixel_ratio: null,
-		width: null,
-		half_width: null,
-		height: null,
-		half_height: null,
-		odd_width: null, 
-		odd_height: null
-	},
-	panning_state: {
-		offset: {
-			x: null,
-			y: null
+		panning: {
+			panning: false,
+			x_naught: null,
+			y_naught: null,
+			offset_x: null,
+			offset_y: null
 		},
-		previous_mouse_position: {
-			x: null,
-			y: null
+		zooming: {
+			zooming: false,
+			factor: null
 		},
-		panning: false
-	},
-	zooming_state: {
-		zooming: false
-	},
-	resizing_state: {
-		timeout: null
-	},
-	workers: [
-		[new Worker("fractals/worker.js"), new Worker("fractals/worker.js")],
-		[new Worker("fractals/worker.js"), new Worker("fractals/worker.js")]
-	],
-	render_image_data: [
-		[null, null],
-		[null, null]
-	],
-	control_image_data: [null, null],
-	init: function(canvas){
-		fractals.canvas = canvas;
-		fractals.context = canvas.getContext("2d");
-		fractals.resize();
-		for(var image_index = 0; image_index < 2; image_index++){
-			fractals.control_image_data[image_index] = new Image();
-			fractals.control_image_data[image_index].width = fractals.canvas.height *  fractals.configuration.control_height;
-			fractals.control_image_data[image_index].height = fractals.control_image_data[image_index].width;
+		rendering: {
+			rendering: false,
+			number_workers_working: null
 		}
-		fractals.control_image_data[0].src = "fractals/zoom_in.svg";
-		fractals.control_image_data[1].src = "fractals/zoom_out.svg";
-		fractals.canvas.addEventListener("mousedown", function(event){
-			if(!fractals.rendering_state.rendering){
-				if(event.offsetX > fractals.canvas.clientHeight * fractals.configuration.control_padding && event.offsetX < fractals.canvas.clientHeight * (fractals.configuration.control_padding + fractals.configuration.control_height)){
-					if(event.offsetY > fractals.canvas.clientHeight * fractals.configuration.control_padding && event.offsetY < fractals.canvas.clientHeight * (fractals.configuration.control_padding + fractals.configuration.control_height)){
-							fractals.view.unit_pixel_ratio /= 2;
-							fractals.render();
-					}else if(event.offsetY > fractals.canvas.clientHeight * (2 * fractals.configuration.control_padding + fractals.configuration.control_height) && event.offsetY < fractals.canvas.clientHeight * (2 * fractals.configuration.control_padding + 2 * fractals.configuration.control_height)){
-							fractals.view.unit_pixel_ratio *= 2;
-							fractals.render();
-					}else{
-						fractals.panning_state.panning = true;
-						fractals.panning_state.previous_mouse_position.x = event.clientX;
-						fractals.panning_state.previous_mouse_position.y = event.clientY;
-					}
-				}else{
-					fractals.panning_state.panning = true;
-					fractals.panning_state.previous_mouse_position.x = event.clientX;
-					fractals.panning_state.previous_mouse_position.y = event.clientY;
-				}
+	},
+	references: {
+		canvas: null,
+		context: null,
+		workers: [[null, null], [null, null]],
+		image_data: [[null, null], [null, null]]
+	},
+	controls: [],
+	initialize: function(canvas){
+		fractals.references.canvas = canvas;
+		fractals.references.context = fractals.references.canvas.getContext("2d");
+
+		fractals.for_each_quadrant(function(quadrant_x, quadrant_y){
+			fractals.references.workers[quadrant_x][quadrant_y] = new Worker("fractals/worker.js");
+			fractals.references.workers[quadrant_x][quadrant_y].postMessage({
+				type: "INITIALIZE",
+				quadrant_x: quadrant_x,
+				quadrant_y, quadrant_y,
+				escape_radius: fractals.configuration.image.escape_radius,
+				recursion_limit: fractals.configuration.image.recursion_limit
+			});
+			fractals.references.workers[quadrant_x][quadrant_y].addEventListener("message", fractals.respond_to_message);
+			fractals.references.workers[quadrant_x][quadrant_y].addEventListener("error", function(event){console.log(event.message);});
+		});
+
+		fractals.references.canvas.addEventListener("resize", fractals.respond_to_resize);
+		fractals.respond_to_resize();
+
+		fractals.state.unit_pixel_ratio = fractals.maximum_zoom_for_initial_window();
+
+		var zoom_in_image = new Image();
+		zoom_in_image.src = "fractals/zoom_in.svg";
+		var zoom_out_image = new Image();
+		zoom_out_image.src = "fractals/zoom_out.svg";
+		fractals.controls.push({
+			image: zoom_in_image,
+			position: {
+				x: fractals.configuration.user_interface.control_spacing * fractals.references.canvas.height,
+				y: fractals.configuration.user_interface.control_spacing * fractals.references.canvas.height
+			},
+			size: {
+				x: fractals.configuration.user_interface.control_height * fractals.references.canvas.height,
+				y: fractals.configuration.user_interface.control_height * fractals.references.canvas.height
+			},
+			respond_to_click: function(){
+				fractals.state.zooming.zooming = true;
+				fractals.state.zooming.factor = 0.5;
+				fractals.state.unit_pixel_ratio *= 0.5;
+				fractals.start_render();
 			}
 		});
-		fractals.canvas.addEventListener("mousemove", function(event){
-			if(fractals.panning_state.panning){
-				fractals.panning_state.offset.x += event.clientX - fractals.panning_state.previous_mouse_position.x;
-				fractals.panning_state.offset.y += event.clientY - fractals.panning_state.previous_mouse_position.y;
-				fractals.panning_state.previous_mouse_position.x = event.clientX;
-				fractals.panning_state.previous_mouse_position.y = event.clientY;
-				fractals.context.clearRect(0, 0, fractals.view.width, fractals.view.height);
-				for(var x_quadrant = 0; x_quadrant < 2; x_quadrant++){
-					for(var y_quadrant = 0; y_quadrant < 2; y_quadrant++){
-						var x = fractals.panning_state.offset.x + (x_quadrant * fractals.view.half_width);
-						var y = fractals.panning_state.offset.y + (y_quadrant * fractals.view.half_height);
-						fractals.context.putImageData(fractals.render_image_data[x_quadrant][y_quadrant], x, y);
-					}
-				}
-				for(var image_index = 0; image_index < 2; image_index++){
-					fractals.context.drawImage(fractals.control_image_data[image_index], fractals.canvas.height * fractals.configuration.control_padding, fractals.canvas.height * fractals.configuration.control_padding * (image_index + 1) + fractals.canvas.height * fractals.configuration.control_height * image_index, fractals.control_image_data[image_index].height, fractals.control_image_data[image_index].height);
-				}
+		fractals.controls.push({
+			image: zoom_out_image,
+			position: {
+				x: fractals.configuration.user_interface.control_spacing * fractals.references.canvas.height,
+				y: (2 * fractals.configuration.user_interface.control_spacing + fractals.configuration.user_interface.control_height) * fractals.references.canvas.height
+			},
+			size: {
+				x: fractals.configuration.user_interface.control_height * fractals.references.canvas.height,
+				y: fractals.configuration.user_interface.control_height * fractals.references.canvas.height
+			},
+			respond_to_click: function(){
+				fractals.state.zooming.zooming = true;
+				fractals.state.zooming.factor = 2;
+				fractals.state.unit_pixel_ratio *= 2;
+				fractals.start_render();
 			}
 		});
-		fractals.canvas.addEventListener("mouseup", function(){
-			if(fractals.panning_state.panning == true){
-				fractals.panning_state.panning = false;
-				fractals.view.center.r -= fractals.panning_state.offset.x * fractals.view.unit_pixel_ratio;
-				fractals.view.center.i += fractals.panning_state.offset.y * fractals.view.unit_pixel_ratio;
-				fractals.panning_state.offset.x = 0;
-				fractals.panning_state.offset.y = 0;
-				fractals.render();
+
+		fractals.references.canvas.addEventListener("mousedown", fractals.respond_to_mousedown)
+		fractals.references.canvas.addEventListener("mousemove", fractals.respond_to_mousemove);
+		fractals.references.canvas.addEventListener("mouseup", fractals.respond_to_mouseup);
+
+		fractals.start_render();
+	},
+	respond_to_resize: function(){
+		fractals.references.canvas.width = fractals.references.canvas.clientWidth * fractals.configuration.image.sample_pixel_ratio;
+		fractals.references.canvas.height = fractals.references.canvas.clientHeight * fractals.configuration.image.sample_pixel_ratio;
+		
+		fractals.for_each_quadrant(function(quadrant_x, quadrant_y){
+			fractals.references.workers[quadrant_x][quadrant_y].postMessage({
+				type: "SET_SIZE",
+				width: fractals.references.canvas.width / 2,
+				height: fractals.references.canvas.height / 2
+			});
+		});
+	},
+	maximum_zoom_for_initial_window: function(){
+		var width_constrained_unit_pixel_ratio = fractals.configuration.initial_window.r / fractals.references.canvas.clientWidth;
+		var height_constrained_unit_pixel_ratio = fractals.configuration.initial_window.i / fractals.references.canvas.clientHeight;
+		return Math.max(width_constrained_unit_pixel_ratio, height_constrained_unit_pixel_ratio);
+	},
+	for_each_quadrant: function(fn){
+		for(var quadrant_x = 0; quadrant_x < 2; quadrant_x++){
+			for(var quadrant_y = 0; quadrant_y < 2; quadrant_y++){
+				fn(quadrant_x, quadrant_y);
 			}
-		});
-		window.addEventListener("resize", function(){
-			clearTimeout(fractals.resizing_state.timeout)
-			fractals.resizing_state.timeout = setTimeout(function(){
-				fractals.resize();
-				fractals.render();
-			}, 500);
-		});
-		if(fractals.configuration.minimum_initial_window.r / fractals.view.width > fractals.configuration.minimum_initial_window.i / fractals.view.height){
-			fractals.view.unit_pixel_ratio = fractals.configuration.minimum_initial_window.r / fractals.view.width;
-		}else{
-			fractals.view.unit_pixel_ratio = fractals.configuration.minimum_initial_window.i / fractals.view.height;
 		}
-		for(var x_quadrant = 0; x_quadrant < 2; x_quadrant++){
-			for(var y_quadrant = 0; y_quadrant < 2; y_quadrant++){
-				fractals.workers[x_quadrant][y_quadrant].onmessage = function(message){
-					var image_data_array = message.data[0];
-					var worker_fractals = message.data[1];
-					fractals.render_image_data[worker_fractals.x_quadrant][worker_fractals.y_quadrant] = new ImageData(image_data_array, worker_fractals.render_width, worker_fractals.render_height);
-					fractals.context.putImageData(fractals.render_image_data[worker_fractals.x_quadrant][worker_fractals.y_quadrant], worker_fractals.x_quadrant * fractals.view.half_width + (fractals.view.odd_width * (worker_fractals.x_quadrant > 0)), worker_fractals.y_quadrant * fractals.view.half_height + fractals.view.odd_height * (worker_fractals.y_quadrant > 0));
-					fractals.rendering_state.number_workers_working--;
-					if(fractals.rendering_state.number_workers_working == 0){
-						for(var image_index = 0; image_index < 2; image_index++){
-							fractals.context.drawImage(fractals.control_image_data[image_index], fractals.canvas.height * fractals.configuration.control_padding, fractals.canvas.height * fractals.configuration.control_padding * (image_index + 1) + fractals.canvas.height * fractals.configuration.control_height * image_index, fractals.control_image_data[image_index].height, fractals.control_image_data[image_index].height);
+	},
+	for_each_control: function(fn){
+		for(var control_index = 0; control_index < fractals.controls.length; control_index++){
+			fn(control_index);
+		}
+	},
+	respond_to_mousedown: function(event){
+		if(fractals.state.rendering.rendering){
+			return;
+		}
+		var control_clicked = false;
+		fractals.for_each_control(function(control_index){
+			if(event.offsetX * fractals.configuration.image.sample_pixel_ratio > fractals.controls[control_index].position.x){
+				if(event.offsetX * fractals.configuration.image.sample_pixel_ratio < fractals.controls[control_index].position.x + fractals.controls[control_index].size.x){
+					if(event.offsetY * fractals.configuration.image.sample_pixel_ratio > fractals.controls[control_index].position.y){
+						if(event.offsetY * fractals.configuration.image.sample_pixel_ratio < fractals.controls[control_index].position.y + fractals.controls[control_index].size.y){
+							fractals.controls[control_index].respond_to_click();
+							control_clicked = true;
 						}
-						fractals.rendering_state.rendering = false;
 					}
-				};
+				}
 			}
+		});
+		if(control_clicked){
+			return;
 		}
-		fractals.render();
+		fractals.state.panning.panning = true;
+		fractals.state.panning.x_naught = event.offsetX;
+		fractals.state.panning.y_naught = event.offsetY;
+	},
+	respond_to_mousemove: function(event){
+		if(fractals.state.rendering.rendering){
+			return;
+		}
+		if(fractals.state.panning.panning){
+			fractals.state.panning.offset_x = event.offsetX - fractals.state.panning.x_naught;
+			fractals.state.panning.offset_y = event.offsetY - fractals.state.panning.y_naught;
+			fractals.render();
+		}
+	},
+	respond_to_mouseup: function(event){
+		if(fractals.state.rendering.rendering){
+			return;
+		}
+		if(fractals.state.panning.panning){
+			fractals.state.panning.offset_x = event.offsetX - fractals.state.panning.x_naught;
+			fractals.state.panning.offset_y = event.offsetY - fractals.state.panning.y_naught;
+			fractals.state.center.r -= fractals.state.panning.offset_x * fractals.configuration.image.sample_pixel_ratio * fractals.state.unit_pixel_ratio;
+			fractals.state.center.i += fractals.state.panning.offset_y * fractals.configuration.image.sample_pixel_ratio * fractals.state.unit_pixel_ratio;
+			fractals.start_render();
+			return;
+		}
+	},
+	start_render: function(){
+		if(fractals.state.rendering.rendering){
+			return;
+		}
+		fractals.state.rendering.rendering = true;
+		fractals.for_each_quadrant(function(quadrant_x, quadrant_y){
+			fractals.state.rendering.number_workers_working++;
+			fractals.references.workers[quadrant_x][quadrant_y].postMessage({
+				type: "RENDER",
+				top_left_r: fractals.state.center.r - (1 - quadrant_x) * fractals.references.canvas.width / 2 * fractals.state.unit_pixel_ratio,
+				top_left_i: fractals.state.center.i + (1 - quadrant_y) * fractals.references.canvas.height / 2 * fractals.state.unit_pixel_ratio,
+				unit_pixel_ratio: fractals.state.unit_pixel_ratio
+			});
+		});
 	},
 	render: function(){
-		fractals.rendering_state.rendering = true;
-		for(var x_quadrant = 0; x_quadrant < 2; x_quadrant++){
-			for(var y_quadrant = 0; y_quadrant < 2; y_quadrant++){
-				fractals.rendering_state.number_workers_working++;
-				fractals.workers[x_quadrant][y_quadrant].postMessage({
-					c_r_start: fractals.view.center.r - (1 - x_quadrant) * (fractals.view.half_width + (fractals.view.odd_width * (x_quadrant == 0))) * fractals.view.unit_pixel_ratio,
-					c_i_start: fractals.view.center.i + (1 - y_quadrant) * (fractals.view.half_height + (fractals.view.odd_height * (y_quadrant == 0))) * fractals.view.unit_pixel_ratio,
-					unit_pixel_ratio: fractals.view.unit_pixel_ratio,
-					render_width: fractals.view.half_width + (fractals.view.odd_width * (x_quadrant == 0)),
-					render_height: fractals.view.half_height + (fractals.view.odd_height * (y_quadrant == 0)),
-					x_quadrant: x_quadrant,
-					y_quadrant: y_quadrant,
-					maximum_recursions: fractals.configuration.maximum_recursions,
-					escape_radius: fractals.configuration.escape_radius
-				});
-			}
-		}
+		fractals.references.context.clearRect(0, 0, fractals.references.canvas.width, fractals.references.canvas.height);
+		fractals.for_each_quadrant(function(quadrant_x, quadrant_y){
+			fractals.references.context.putImageData(
+				fractals.references.image_data[quadrant_x][quadrant_y],
+				fractals.references.canvas.width / 2 * quadrant_x + (fractals.state.panning.panning ? fractals.state.panning.offset_x * fractals.configuration.image.sample_pixel_ratio: 0),
+				fractals.references.canvas.height / 2 * quadrant_y + (fractals.state.panning.panning ? fractals.state.panning.offset_y * fractals.configuration.image.sample_pixel_ratio: 0)
+			);
+		});
+		fractals.for_each_control(function(control_index){
+			fractals.references.context.drawImage(
+				fractals.controls[control_index].image,
+				fractals.controls[control_index].position.x,
+				fractals.controls[control_index].position.y,
+				fractals.controls[control_index].size.x,
+				fractals.controls[control_index].size.y
+			);
+		});
 	},
-	resize: function(){
-		var clientWidth = fractals.canvas.clientWidth;
-		var clientHeight = fractals.canvas.clientHeight;
-		fractals.canvas.width = clientWidth * fractals.configuration.resolution_factor;
-		if(fractals.canvas.width % 2 != 0){
-			fractals.view.odd_width = 1;
-		}else{
-			fractals.view.odd_width = 0;
+	respond_to_message: function(message){
+		fractals.references.image_data[message.data.quadrant_x][message.data.quadrant_y] = new ImageData(new Uint8ClampedArray(message.data.buffer), fractals.references.canvas.width / 2, fractals.references.canvas.height / 2);
+		fractals.state.rendering.number_workers_working--;
+		if(fractals.state.rendering.number_workers_working == 0){
+			fractals.state.rendering.rendering = false;
+			fractals.state.panning.panning = false;
+			fractals.state.panning.offset_x = 0;
+			fractals.state.panning.offset_y = 0;
+			fractals.state.zooming.zooming = false;
+			fractals.state.zooming.factor = 1;
+			fractals.render();
 		}
-		fractals.canvas.height = clientHeight * fractals.configuration.resolution_factor;
-		if(fractals.canvas.height % 2 != 0){
-			fractals.view.odd_height = 1;
-		}else{
-			fractals.view.odd_width = 0;
-		}
-		fractals.view.width = fractals.canvas.width;
-		fractals.view.half_width = Math.floor(fractals.view.width / 2);
-		fractals.view.height = fractals.canvas.height;
-		fractals.view.half_height = Math.floor(fractals.view.height / 2);
 	}
-};
+}
