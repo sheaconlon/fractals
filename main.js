@@ -1,7 +1,7 @@
 var fractals = {
 	configuration: {
 		image: {
-			recursion_limit: 254,
+			recursion_limit: 102,
 			escape_radius: 2,
 			sample_pixel_ratio: 2
 		},
