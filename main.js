@@ -36,6 +36,10 @@ var fractals = {
 		rendering: {
 			rendering: false,
 			number_workers_working: null
+		},
+		resizing: {
+			resizing: false,
+			timeout: null
 		}
 	},
 	references: {
@@ -62,7 +66,15 @@ var fractals = {
 			fractals.references.workers[quadrant_x][quadrant_y].addEventListener("error", function(event){console.log(event.message);});
 		});
 
-		fractals.references.canvas.addEventListener("resize", fractals.respond_to_resize);
+		window.addEventListener("resize", function(){
+			if(fractals.state.resizing.resizing){
+				clearTimeout(fractals.state.resizing.timeout);
+			}
+			setTimeout(function(){
+				fractals.respond_to_resize();
+				fractals.start_render();
+			}, 500);
+		});
 		fractals.respond_to_resize();
 
 		fractals.state.unit_pixel_ratio = fractals.maximum_zoom_for_initial_window();
