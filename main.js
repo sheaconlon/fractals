@@ -48,7 +48,44 @@ var fractals = {
 		workers: [[null, null], [null, null]],
 		image_data: [[null, null], [null, null]]
 	},
-	controls: [],
+	controls: [
+		{
+			image_relative_path: "fractals/zoom_in.svg",
+			image: null,
+			position: {
+				x: function(){return fractals.configuration.user_interface.control_spacing * fractals.references.canvas.height;},
+				y: function(){return fractals.configuration.user_interface.control_spacing * fractals.references.canvas.height;}
+			},
+			size: {
+				x: function(){return fractals.configuration.user_interface.control_height * fractals.references.canvas.height;},
+				y: function(){return fractals.configuration.user_interface.control_height * fractals.references.canvas.height;}
+			},
+			respond_to_click: function(){
+				fractals.state.zooming.zooming = true;
+				fractals.state.zooming.factor = 0.5;
+				fractals.state.unit_pixel_ratio *= 0.5;
+				fractals.start_render();
+			}
+		},
+		{
+			image_relative_path: "fractals/zoom_out.svg",
+			image: null,
+			position: {
+				x: function(){return fractals.configuration.user_interface.control_spacing * fractals.references.canvas.height;},
+				y: function(){return (2 * fractals.configuration.user_interface.control_spacing + fractals.configuration.user_interface.control_height) * fractals.references.canvas.height;}
+			},
+			size: {
+				x: function(){return fractals.configuration.user_interface.control_height * fractals.references.canvas.height;},
+				y: function(){return fractals.configuration.user_interface.control_height * fractals.references.canvas.height;}
+			},
+			respond_to_click: function(){
+				fractals.state.zooming.zooming = true;
+				fractals.state.zooming.factor = 2;
+				fractals.state.unit_pixel_ratio *= 2;
+				fractals.start_render();
+			}
+		}
+	],
 	initialize: function(canvas){
 		fractals.references.canvas = canvas;
 		fractals.references.context = fractals.references.canvas.getContext("2d");
@@ -66,53 +103,19 @@ var fractals = {
 			fractals.references.workers[quadrant_x][quadrant_y].addEventListener("error", function(event){console.log(event.message);});
 		});
 
-		window.addEventListener("resize", fractals.respond_to_window_resize);
-		fractals.set_size();
-
 		fractals.state.unit_pixel_ratio = fractals.maximum_zoom_for_initial_window();
 
-		var zoom_in_image = new Image();
-		zoom_in_image.src = "fractals/zoom_in.svg";
-		var zoom_out_image = new Image();
-		zoom_out_image.src = "fractals/zoom_out.svg";
-		fractals.controls.push({
-			image: zoom_in_image,
-			position: {
-				x: function(){return fractals.configuration.user_interface.control_spacing * fractals.references.canvas.height;},
-				y: function(){return fractals.configuration.user_interface.control_spacing * fractals.references.canvas.height;}
-			},
-			size: {
-				x: function(){return fractals.configuration.user_interface.control_height * fractals.references.canvas.height;},
-				y: function(){return fractals.configuration.user_interface.control_height * fractals.references.canvas.height;}
-			},
-			respond_to_click: function(){
-				fractals.state.zooming.zooming = true;
-				fractals.state.zooming.factor = 0.5;
-				fractals.state.unit_pixel_ratio *= 0.5;
-				fractals.start_render();
-			}
-		});
-		fractals.controls.push({
-			image: zoom_out_image,
-			position: {
-				x: function(){return fractals.configuration.user_interface.control_spacing * fractals.references.canvas.height;},
-				y: function(){return (2 * fractals.configuration.user_interface.control_spacing + fractals.configuration.user_interface.control_height) * fractals.references.canvas.height;}
-			},
-			size: {
-				x: function(){return fractals.configuration.user_interface.control_height * fractals.references.canvas.height;},
-				y: function(){return fractals.configuration.user_interface.control_height * fractals.references.canvas.height;}
-			},
-			respond_to_click: function(){
-				fractals.state.zooming.zooming = true;
-				fractals.state.zooming.factor = 2;
-				fractals.state.unit_pixel_ratio *= 2;
-				fractals.start_render();
-			}
+		fractals.for_each_control(function(control_index){
+			fractals.controls[control_index].image = new Image();
+			fractals.controls[control_index].image.src = fractals.controls[control_index].image_relative_path;
 		});
 
 		fractals.references.canvas.addEventListener("mousedown", fractals.respond_to_mousedown)
 		fractals.references.canvas.addEventListener("mousemove", fractals.respond_to_mousemove);
 		fractals.references.canvas.addEventListener("mouseup", fractals.respond_to_mouseup);
+
+		window.addEventListener("resize", fractals.respond_to_window_resize);
+		fractals.set_size();
 
 		fractals.start_render();
 	},
