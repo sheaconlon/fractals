@@ -33,7 +33,6 @@ onmessage = function(message){
 					z.rsq = z.r * z.r;
 					z.isq = z.i * z.i;
 					recursions = 0;
-					//hrow [z.rsq + z.isq, data.escape_radius_squared, recursions, data.recursion_limit];
 					while(z.rsq + z.isq < data.escape_radius_squared && recursions < data.recursion_limit){
 						z.r2 = z.r;
 						z.r = z.rsq - z.isq + c.r;

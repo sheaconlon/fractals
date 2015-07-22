@@ -1,7 +1,7 @@
 var fractals = {
 	configuration: {
 		image: {
-			recursion_limit: 102,
+			recursion_limit: 254,
 			escape_radius: 2,
 			sample_pixel_ratio: 2
 		},
@@ -12,13 +12,13 @@ var fractals = {
 			zoom_factor: 2
 		},
 		initial_window: {
-			r: 2,
-			i: 1
+			r: 0.4,
+			i: 0.2
 		}
 	},
 	state: {
 		center: {
-			r: -0.7,
+			r: -1.4,
 			i: 0
 		},
 		unit_pixel_ratio: null,
@@ -35,7 +35,9 @@ var fractals = {
 		},
 		rendering: {
 			rendering: false,
-			number_workers_working: null
+			number_workers_working: null,
+			progress_rotation: null,
+			progress_image: null
 		},
 		resizing: {
 			resizing: false,
@@ -103,6 +105,9 @@ var fractals = {
 			fractals.references.workers[quadrant_x][quadrant_y].addEventListener("error", function(event){console.log(event.message);});
 		});
 
+		window.addEventListener("resize", fractals.respond_to_window_resize);
+		fractals.set_size();
+
 		fractals.state.unit_pixel_ratio = fractals.maximum_zoom_for_initial_window();
 
 		fractals.for_each_control(function(control_index){
@@ -110,12 +115,12 @@ var fractals = {
 			fractals.controls[control_index].image.src = fractals.controls[control_index].image_relative_path;
 		});
 
+		fractals.state.rendering.progress_image = new Image();
+		fractals.state.rendering.progress_image.src = "fractals/progress.svg";
+
 		fractals.references.canvas.addEventListener("mousedown", fractals.respond_to_mousedown)
 		fractals.references.canvas.addEventListener("mousemove", fractals.respond_to_mousemove);
 		fractals.references.canvas.addEventListener("mouseup", fractals.respond_to_mouseup);
-
-		window.addEventListener("resize", fractals.respond_to_window_resize);
-		fractals.set_size();
 
 		fractals.start_render();
 	},
@@ -141,8 +146,8 @@ var fractals = {
 		}, 500);
 	},
 	maximum_zoom_for_initial_window: function(){
-		var width_constrained_unit_pixel_ratio = fractals.configuration.initial_window.r / fractals.references.canvas.clientWidth;
-		var height_constrained_unit_pixel_ratio = fractals.configuration.initial_window.i / fractals.references.canvas.clientHeight;
+		var width_constrained_unit_pixel_ratio = fractals.configuration.initial_window.r / fractals.references.canvas.width;
+		var height_constrained_unit_pixel_ratio = fractals.configuration.initial_window.i / fractals.references.canvas.height;
 		return Math.max(width_constrained_unit_pixel_ratio, height_constrained_unit_pixel_ratio);
 	},
 	for_each_quadrant: function(fn){
@@ -218,6 +223,23 @@ var fractals = {
 				unit_pixel_ratio: fractals.state.unit_pixel_ratio
 			});
 		});
+		fractals.state.rendering.progress_rotation = 0;
+		fractals.state.rendering.progress_timeout = setTimeout(fractals.advance_progress, 10);
+	},
+	advance_progress: function(){
+		fractals.references.context.save();
+		fractals.references.context.translate(2 * fractals.configuration.user_interface.control_spacing * fractals.references.canvas.height / 2 + fractals.references.canvas.width - (2 * fractals.configuration.user_interface.control_spacing * fractals.references.canvas.height + 2 * fractals.configuration.user_interface.control_spacing * fractals.references.canvas.height), 2 * fractals.configuration.user_interface.control_spacing * fractals.references.canvas.height + 2 * fractals.configuration.user_interface.control_spacing * fractals.references.canvas.height / 2);
+		fractals.references.context.rotate(fractals.state.rendering.progress_rotation * Math.PI / 180);
+		fractals.references.context.drawImage(
+			fractals.state.rendering.progress_image,
+			-2 * fractals.configuration.user_interface.control_spacing * fractals.references.canvas.height / 2,
+			-2 * fractals.configuration.user_interface.control_spacing * fractals.references.canvas.height / 2,
+			2 * fractals.configuration.user_interface.control_spacing * fractals.references.canvas.height,
+			2 * fractals.configuration.user_interface.control_spacing * fractals.references.canvas.height
+		);
+		fractals.references.context.restore();
+		fractals.state.rendering.progress_rotation += 10;
+		fractals.state.rendering.progress_timeout = setTimeout(fractals.advance_progress, 10);
 	},
 	render: function(){
 		fractals.references.context.clearRect(0, 0, fractals.references.canvas.width, fractals.references.canvas.height);
@@ -242,6 +264,7 @@ var fractals = {
 		fractals.references.image_data[message.data.quadrant_x][message.data.quadrant_y] = new ImageData(new Uint8ClampedArray(message.data.buffer), fractals.references.canvas.width / 2, fractals.references.canvas.height / 2);
 		fractals.state.rendering.number_workers_working--;
 		if(fractals.state.rendering.number_workers_working == 0){
+			clearTimeout(fractals.state.rendering.progress_timeout);
 			fractals.state.rendering.rendering = false;
 			fractals.state.panning.panning = false;
 			fractals.state.panning.offset_x = 0;
