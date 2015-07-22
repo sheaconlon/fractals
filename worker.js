@@ -1,14 +1,16 @@
 var data = {
-	quadrant_x: null,
-	quadrant_y: null,
+	width: null,
+	height: null,
+	chunk_x: null,
+	chunk_y: null,
 	escape_radius_squared: null,
 	recursion_limit: null
-}
+};
 onmessage = function(message){
-	switch(message.data.type){
+	switch(message.data.command){
 		case "INITIALIZE":
-			data.quadrant_x = message.data.quadrant_x;
-			data.quadrant_y = message.data.quadrant_y;
+			data.chunk_x = message.data.chunk_x;
+			data.chunk_y = message.data.chunk_y;
 			data.escape_radius_squared = message.data.escape_radius * message.data.escape_radius;
 			data.recursion_limit = message.data.recursion_limit;
 			break;
@@ -68,8 +70,8 @@ onmessage = function(message){
 			}
 			postMessage({
 				buffer: image_data_array.buffer, 
-				quadrant_x: data.quadrant_x,
-				quadrant_y: data.quadrant_y
+				chunk_x: data.chunk_x,
+				chunk_y: data.chunk_y
 			}, [image_data_array.buffer]);
 	}
-}
+};
