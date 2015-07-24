@@ -8,7 +8,7 @@ var fractals = {
 	escape_radius: 2,
 	sample_pixel_ratio: 2,
 	control_size: 0.12,
-	control_spacing: 0.05,
+	control_spacing: 0.04,
 	zoom_factor: 2,
 	initial_window_center_r: -1.5,
 	initial_window_center_i: 0,
@@ -52,12 +52,12 @@ var fractals = {
 		{
 			image: function(){return fractals.image_assets.zoom_in;},
 			position: {
-				x: function(){return fractals.control_spacing * fractals.canvas.height;},
-				y: function(){return fractals.control_spacing * fractals.canvas.height;}
+				x: function(){return 15 * fractals.sample_pixel_ratio;},
+				y: function(){return 15 * fractals.sample_pixel_ratio;}
 			},
 			size: {
-				x: function(){return fractals.control_size * fractals.canvas.height;},
-				y: function(){return fractals.control_size * fractals.canvas.height;}
+				x: function(){return 35 * fractals.sample_pixel_ratio;},
+				y: function(){return 35 * fractals.sample_pixel_ratio;}
 			},
 			respond_to_click: function(){
 				fractals.state.zooming.is_zooming = true;
@@ -70,12 +70,12 @@ var fractals = {
 		{
 			image: function(){return fractals.image_assets.zoom_out;},
 			position: {
-				x: function(){return fractals.control_spacing * fractals.canvas.height;},
-				y: function(){return (2 * fractals.control_spacing + fractals.control_size) * fractals.canvas.height;}
+				x: function(){return 15 * fractals.sample_pixel_ratio;},
+				y: function(){return 2 * 15 * fractals.sample_pixel_ratio + 35 * fractals.sample_pixel_ratio;}
 			},
 			size: {
-				x: function(){return fractals.control_size * fractals.canvas.height;},
-				y: function(){return fractals.control_size * fractals.canvas.height;}
+				x: function(){return 35 * fractals.sample_pixel_ratio;},
+				y: function(){return 35 * fractals.sample_pixel_ratio;}
 			},
 			respond_to_click: function(){
 				fractals.state.zooming.is_zooming = true;
@@ -138,7 +138,7 @@ var fractals = {
 			setTimeout(function(){
 				fractals.size_image();
 				fractals.start_render();
-			}, 500);
+			}, 1000);
 		});
 		fractals.start_render();
 	},
@@ -259,14 +259,14 @@ var fractals = {
 	},
 	advance_progress: function(){
 		fractals.canvas.getContext("2d").save();
-		fractals.canvas.getContext("2d").translate(fractals.canvas.width - ((fractals.control_spacing + fractals.control_size / 2) * fractals.canvas.height), (fractals.control_spacing + fractals.control_size / 2) * fractals.canvas.height);
+		fractals.canvas.getContext("2d").translate(fractals.canvas.width - ((fractals.control_spacing + fractals.control_size / 2) * ((fractals.canvas.height + fractals.canvas.width) / 2)), (fractals.control_spacing + fractals.control_size / 2) * ((fractals.canvas.height + fractals.canvas.width) / 2));
 		fractals.canvas.getContext("2d").rotate(fractals.state.rendering.progress_rotation * Math.PI / 180);
 		fractals.canvas.getContext("2d").drawImage(
 			fractals.image_assets.progress,
-			-fractals.control_size * fractals.canvas.height / 2,
-			-fractals.control_size * fractals.canvas.height / 2,
-			fractals.control_size * fractals.canvas.height,
-			fractals.control_size * fractals.canvas.height
+			-35 * fractals.sample_pixel_ratio / 2,
+			-35 * fractals.sample_pixel_ratio / 2,
+			35 * fractals.sample_pixel_ratio,
+			35 * fractals.sample_pixel_ratio
 		);
 		fractals.canvas.getContext("2d").restore();
 		fractals.state.rendering.progress_rotation += 10;
