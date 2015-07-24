@@ -1,3 +1,6 @@
+window.onerror = function(message, url, line){
+	alert([message, url, line]);
+}
 var fractals = {
 	worker_relative_path: "fractals/worker.js",
 	chunks_per_dimension: 2,
@@ -107,9 +110,27 @@ var fractals = {
 		}
 		fractals.size_image();
 		fractals.set_initial_view();
-		fractals.canvas.addEventListener("mousedown", fractals.respond_to_mousedown)
-		fractals.canvas.addEventListener("mousemove", fractals.respond_to_mousemove);
-		fractals.canvas.addEventListener("mouseup", fractals.respond_to_mouseup);
+		fractals.canvas.addEventListener("mousedown", function(event){
+			fractals.respond_to_pointer_down({x: event.pageX, y: event.pageY});
+		});
+		fractals.canvas.addEventListener("touchstart", function(event){
+			event.preventDefault();
+			fractals.respond_to_pointer_down({x: event.touches[0].pageX, y: event.touches[0].pageY});
+		});
+		fractals.canvas.addEventListener("mousemove", function(event){
+			fractals.respond_to_pointer_move({x: event.pageX, y: event.pageY});
+		});
+		fractals.canvas.addEventListener("touchmove", function(event){
+			event.preventDefault();
+			fractals.respond_to_pointer_move({x: event.touches[0].pageX, y: event.touches[0].pageY});
+		});
+		fractals.canvas.addEventListener("mouseup", function(event){
+			fractals.respond_to_pointer_up({x: event.pageX, y: event.pageY});
+		});
+		fractals.canvas.addEventListener("touchend", function(event){
+			event.preventDefault();
+			fractals.respond_to_pointer_up({x: event.changedTouches[0].pageX, y: event.changedTouches[0].pageY});
+		});
 		window.addEventListener("resize", function(){
 			if(fractals.state.resizing.is_resizing){
 				clearTimeout(fractals.state.resizing.timeout);
@@ -169,14 +190,25 @@ var fractals = {
 		var height_constrained_unit_pixel_ratio = fractals.initial_window_minimum_height / fractals.canvas.height;
 		fractals.state.view.unit_pixel_ratio = Math.max(width_constrained_unit_pixel_ratio, height_constrained_unit_pixel_ratio);
 	},
-	respond_to_mousedown: function(event){
+	get_position: function(element){
+	    var position = {x: 0, y: 0};
+	    if(element.offsetParent) {
+	        do{
+	            position.x += element.offsetLeft;
+	            position.y += element.offsetTop;
+	        }while(element = element.offsetParent);
+	    }
+	    return position;
+	},
+	respond_to_pointer_down: function(position){
 		if(fractals.state.rendering.is_rendering) return;
-		var control_clicked = false;
+		var canvas_position = fractals.get_position(fractals.canvas);
+		var offset = {x: position.x - canvas_position.x, y: position.y - canvas_position.y};
 		for(var control_index = 0; control_index < fractals.controls.length; control_index++){
-			if(event.offsetX * fractals.sample_pixel_ratio > fractals.controls[control_index].position.x()){
-				if(event.offsetX * fractals.sample_pixel_ratio < fractals.controls[control_index].position.x() + fractals.controls[control_index].size.x()){
-					if(event.offsetY * fractals.sample_pixel_ratio > fractals.controls[control_index].position.y()){
-						if(event.offsetY * fractals.sample_pixel_ratio < fractals.controls[control_index].position.y() + fractals.controls[control_index].size.y()){
+			if(offset.x * fractals.sample_pixel_ratio > fractals.controls[control_index].position.x()){
+				if(offset.x * fractals.sample_pixel_ratio < fractals.controls[control_index].position.x() + fractals.controls[control_index].size.x()){
+					if(offset.y * fractals.sample_pixel_ratio > fractals.controls[control_index].position.y()){
+						if(offset.y * fractals.sample_pixel_ratio < fractals.controls[control_index].position.y() + fractals.controls[control_index].size.y()){
 							fractals.controls[control_index].respond_to_click();
 							return;
 						}
@@ -185,22 +217,22 @@ var fractals = {
 			}
 		}
 		fractals.state.panning.is_panning = true;
-		fractals.state.panning.x_naught = event.offsetX;
-		fractals.state.panning.y_naught = event.offsetY;
+		fractals.state.panning.x_naught = position.x;
+		fractals.state.panning.y_naught = position.y;
 	},
-	respond_to_mousemove: function(event){
+	respond_to_pointer_move: function(position){
 		if(fractals.state.rendering.is_rendering) return;
 		if(fractals.state.panning.is_panning){
-			fractals.state.panning.offset_x = event.offsetX - fractals.state.panning.x_naught;
-			fractals.state.panning.offset_y = event.offsetY - fractals.state.panning.y_naught;
+			fractals.state.panning.offset_x = position.x - fractals.state.panning.x_naught;
+			fractals.state.panning.offset_y = position.y - fractals.state.panning.y_naught;
 			fractals.render_images();
 		}
 	},
-	respond_to_mouseup: function(event){
+	respond_to_pointer_up: function(position){
 		if(fractals.state.rendering.is_rendering) return;
 		if(fractals.state.panning.is_panning){
-			fractals.state.panning.offset_x = event.offsetX - fractals.state.panning.x_naught;
-			fractals.state.panning.offset_y = event.offsetY - fractals.state.panning.y_naught;
+			fractals.state.panning.offset_x = position.x - fractals.state.panning.x_naught;
+			fractals.state.panning.offset_y = position.y - fractals.state.panning.y_naught;
 			fractals.state.view.center_r -= fractals.state.panning.offset_x * fractals.sample_pixel_ratio * fractals.state.view.unit_pixel_ratio;
 			fractals.state.view.center_i += fractals.state.panning.offset_y * fractals.sample_pixel_ratio * fractals.state.view.unit_pixel_ratio;
 			fractals.start_render();
