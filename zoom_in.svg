@@ -1,61 +1,23 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Generator: Adobe Illustrator 19.0.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-
-<svg
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   version="1.1"
-   id="Layer_1"
-   x="0px"
-   y="0px"
-   viewBox="0 0 200 200"
-   style="enable-background:new 0 0 200 200;"
-   xml:space="preserve"
-   inkscape:version="0.91 r13725"
-   sodipodi:docname="zoom_in.svg"><metadata
-     id="metadata3436"><rdf:RDF><cc:Work
-         rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
-           rdf:resource="http://purl.org/dc/dcmitype/StillImage" /></cc:Work></rdf:RDF></metadata><defs
-     id="defs3434" /><sodipodi:namedview
-     pagecolor="#ffffff"
-     bordercolor="#666666"
-     borderopacity="1"
-     objecttolerance="10"
-     gridtolerance="10"
-     guidetolerance="10"
-     inkscape:pageopacity="0"
-     inkscape:pageshadow="2"
-     inkscape:window-width="1313"
-     inkscape:window-height="747"
-     id="namedview3432"
-     showgrid="false"
-     inkscape:zoom="3.055"
-     inkscape:cx="82.222393"
-     inkscape:cy="102.49778"
-     inkscape:window-x="53"
-     inkscape:window-y="21"
-     inkscape:window-maximized="1"
-     inkscape:current-layer="Layer_1" /><style
-     type="text/css"
-     id="style3424">
-	.st0{fill:#FF814A;}
-</style><g
-     id="g4932"><path
-       style="fill:#d44600;fill-opacity:1;stroke:#000000;stroke-opacity:1;stroke-width:2.5;stroke-miterlimit:4;stroke-dasharray:none"
-       id="path3426"
-       d="M25,0h150c13.8,0,25,11.3,25,25v150c0,13.8-11.3,25-25,25H25c-13.8,0-25-11.3-25-25V25C0,11.3,11.3,0,25,0z" /><g
-       style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1"
-       id="g4866"><path
-         class="st0"
-         d="M172,115H28c-1.7,0-3-1.3-3-3V88c0-1.7,1.3-3,3-3h144c1.7,0,3,1.3,3,3v24C175,113.7,173.7,115,172,115z"
-         id="path3428"
-         style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1" /><path
-         class="st0"
-         d="M115,28v144c0,1.7-1.3,3-3,3H88c-1.7,0-3-1.3-3-3V28c0-1.7,1.3-3,3-3h24C113.7,25,115,26.3,115,28z"
-         id="path3430"
-         style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-opacity:1" /></g></g></svg>
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 19.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1"
+	 id="Layer_1" sodipodi:docname="zoom_in.svg" inkscape:version="0.91 r13725" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:cc="http://creativecommons.org/ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="-205 297 200 200"
+	 style="enable-background:new -205 297 200 200;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#D44600;}
+	.st1{fill:#FFFFFF;}
+</style>
+<sodipodi:namedview  inkscape:pageopacity="0" inkscape:current-layer="Layer_1" inkscape:window-maximized="1" inkscape:window-y="21" inkscape:window-x="53" inkscape:window-height="747" inkscape:window-width="1313" inkscape:pageshadow="2" objecttolerance="10" bordercolor="#666666" id="namedview3432" pagecolor="#ffffff" gridtolerance="10" showgrid="false" guidetolerance="10" borderopacity="1" inkscape:cy="102.49778" inkscape:cx="82.222393" inkscape:zoom="3.055">
+	</sodipodi:namedview>
+<g id="g4932">
+	<path id="path3426" class="st0" d="M-180,297h150c13.8,0,25,11.3,25,25v150c0,13.8-11.3,25-25,25h-150c-13.8,0-25-11.3-25-25V322
+		C-205,308.3-193.7,297-180,297z"/>
+	<g id="g4866">
+		<path id="path3428" class="st1" d="M-33,412h-144c-1.7,0-3-1.3-3-3v-24c0-1.7,1.3-3,3-3h144c1.7,0,3,1.3,3,3v24
+			C-30,410.7-31.3,412-33,412z"/>
+		<path id="path3430" class="st1" d="M-90,325v144c0,1.7-1.3,3-3,3h-24c-1.7,0-3-1.3-3-3V325c0-1.7,1.3-3,3-3h24
+			C-91.3,322-90,323.3-90,325z"/>
+	</g>
+</g>
+</svg>
