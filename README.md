@@ -10,7 +10,7 @@ features
 
 usage
 =====
-To initialize a viewer, call fractals.initialize(myCanvas), where myCanvas is a reference to the canvas which the viewer should be rendered in.
+To initialize a viewer, call `fractals.initialize(myCanvas)`, where `myCanvas` is a reference to the canvas which the viewer should be rendered in.
 
 limitations
 ===========
