@@ -1,6 +1,6 @@
 fractals
 ========
-Fractals is a Javascript plugin that turns any canvas into a fractal viewer.
+Javascript plugin, turns any canvas into fractal viewer
 
 features
 ========
